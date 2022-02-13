@@ -1,3 +1,4 @@
+# Libraries used to build this application
 library(shiny)
 library(shinydashboard)
 library(lubridate)
@@ -7,15 +8,21 @@ library(DT)
 library(gridExtra)
 library(scales)
 
+# this code helps to read multiple tsv files present in this folder and creates a dataframe by combining all the files
 temp = list.files(pattern="*.tsv")
 allData <- lapply(temp,read.delim)
 cta <- do.call(rbind, allData)
 
+# converted the date column from string to date type using lubridate libraries mdy method which converts date to mm-dd-yyyy format
 cta$date<-mdy(cta$date)
+
+# replaced the name of first column as there were some special characters in column name
 names(cta)[1]<-"stationId"
 
+# Shiny dashboard UI component code the code here is used to create User Interface 
 ui <- dashboardPage(
   dashboardHeader(title="CS 424 Project 1"),
+  # Sidebar contains different menuItem and each menuItem points to a different page
   dashboardSidebar(
     sidebarMenu(
       menuItem("", tabName = "cheapBlankSpace"),
@@ -34,8 +41,12 @@ ui <- dashboardPage(
     sidebarMenu(menuItem("Main Page", tabName = "widgets",selected = TRUE)),
     sidebarMenu(menuItem("Interesting Dates", tabName = "dates")))),
   
+  # this is the dashboard body it contains the contents of the webpage
   dashboardBody(
-    tabItems(tabItem(tabName = "dashboard",
+    # this tabItems is used to link menuItem to a particular page
+    tabItems(
+      # when clicked on About Page the contents in this code will be displayed
+      tabItem(tabName = "dashboard",
                      h2("About Page"),
                      p("The data is collected from this website 
                        https://data.cityofchicago.org/Transportation/CTA-Ridership-L-Station-Entries-Daily-Totals/5neh-572f"),
@@ -43,6 +54,8 @@ ui <- dashboardPage(
                        how many people have taken trains or buses at every stop. 
                        Data is collected from 2000 to 2021."),
                      p("This app is written by Abhijeet Chintakunta as part of course project")),
+      
+      # when clicked on widgets the main part of this project is displayed this page contains all the visualizations and the tables
     tabItem(tabName ="widgets",
     fluidRow(
       column(6,
@@ -71,6 +84,7 @@ ui <- dashboardPage(
                        dataTableOutput("table2", height =100))),
     )
     ),
+      # this tab contains interesting dates 
     tabItem(tabName = "dates",
             fluidRow(
                      plotOutput("barplotdate"),
@@ -87,10 +101,15 @@ ui <- dashboardPage(
     ))
     
             
-
+# this code contains the server part of Shiny Dashboard 
+# the server is responsible for developing the graphs and tables which are displayed in UI
 server <- function(input, output) { 
-  #UIC-Halsted Data
+  # this section of code corresponds to the first half of Main page
+  # date is binded to a reactive variable so as to reuse it in the code 
+  # it takes the input from the dropdown Select station and creates a dataframe for that particular station
   data<-reactive({subset(cta,cta$stationname==input$stationname)})
+  
+  # the above code is used to create reactive labels in the graph based on the stationname selected from the Select stationname input
   stationname <- reactive({
     if(input$stationname=="UIC-Halsted"){
       stationname <- "Yearly entries at UIC Halsted"
@@ -103,14 +122,17 @@ server <- function(input, output) {
   }
   })
   
+  # it creates the plot which is the main bar plot displayed in the first half of the screen and assigns it to the input UI to display
   output$barplot<-renderPlot({
     ggplot(data(),aes(x=year(date),y=rides))+geom_bar(stat="identity",fill="steelblue")+
       labs(title = stationname() , x = "Year", y ="Entries")+
       scale_y_continuous(labels = comma)+scale_x_continuous(breaks=c(2000:2021))
   })
   
+  # Another subset of dataframe is created based on Selection of Year from Select Year dropdown
   cta4<-reactive({subset(data(),year(date)==input$year)})
   
+  # the above code is used to create reactive labels in the graph based on Selection input from the dropdown Select the Plottype
   stationname1 <- reactive({
     if(input$stationname=="UIC-Halsted"){
       if(input$plottype=="Monthly"){
@@ -156,7 +178,7 @@ server <- function(input, output) {
     }
   })
   
-  # output$table<-renderDataTable(cta1())
+  # this code observes for changes in the Select plot type input and changes the display accordingly
   observeEvent(input$plottype,if (input$plottype=="Monthly"){
     output$barplotdmw<-renderPlot({
       ggplot(cta4(),aes(x=month(date,label=TRUE,abbr=TRUE),y=rides))+geom_bar(stat="identity", fill="steelblue")+labs(title = stationname1(), x = "Month", y ="Entries")+scale_y_continuous(labels = comma)})
@@ -187,7 +209,6 @@ server <- function(input, output) {
   
   
   # Second Region Output Code
-  # O'Hare Data
   data1<-reactive({cta2<-subset(cta,cta$stationname==input$stationname1)})
   
   stationname2 <- reactive({
