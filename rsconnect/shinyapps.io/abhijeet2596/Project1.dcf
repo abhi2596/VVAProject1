@@ -1,0 +1,14 @@
+name: Project1
+title: Project1
+username:
+account: abhijeet2596
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 5611357
+bundleId: 5573494
+url: https://abhijeet2596.shinyapps.io/Project1/
+when: 1644718936.98424
+lastSyncTime: 1644718936.98424
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: project1.R|Project1.txt
